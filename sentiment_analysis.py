@@ -24,6 +24,11 @@ from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 from textblob import TextBlob
 from dotenv import load_dotenv
 import matplotlib.pyplot as plt
+import pytz
+
+now = datetime.datetime.now()
+now = pytz.utc.localize(now)
+
 
 # Opens the .env file with keys 
 load_dotenv()
@@ -66,7 +71,7 @@ def sentiment_analyser_score(api):
     analysis = SentimentIntensityAnalyzer()
     deadend = True
     for tweet in api.search_tweets(q="" + sentence + "-filter:retweets", count=100, lang="en", tweet_mode="extended"):
-        if (datetime.datetime.now() - tweet.created_at).days < 7:
+        if (now - tweet.created_at).days < 7:
             print(f"\n{tweet.user.name}:{tweet.full_text}")
             vaderScore = analysis.polarity_scores(tweet.full_text)
             textblob = TextBlob(tweet.full_text)
@@ -76,8 +81,7 @@ def sentiment_analyser_score(api):
             print(vaderScore)
             print("----------------------------------------------------------------------------------------------")
             csvWriter.writerow([tweet.id, tweet.user.name, tweet.full_text.encode('utf-8'), vaderScore])
-            time.sleep(1)
-
+            time.sleep(0.1)
         else:
             deadend = False
             plt.title(f"{sentence} Polarity Scores")
