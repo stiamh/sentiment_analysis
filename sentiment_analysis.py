@@ -21,7 +21,6 @@ import csv
 import io
 import os
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
-from textblob import TextBlob
 from dotenv import load_dotenv
 import matplotlib.pyplot as plt
 import pytz
@@ -61,41 +60,32 @@ except:
     print("Error during authentication")
 
 # Creates a CSV file and adds relevant rows. 
+os.remove('tweets.csv')
 csvFile = io.open('tweets.csv', 'a', encoding="utf-8")
 csvWriter = csv.writer(csvFile)
-csvWriter.writerow(['Tweet ID', 'User Name', 'Tweet Text', 'Polarity Score', 'Subjectivity Score'])
+csvWriter.writerow(['User Name', 'Tweet Text', 'Polarity Score'])
 
 def sentiment_analyser_score(api):
     print('Please enter a sentence to score')
     sentence = input()
     analysis = SentimentIntensityAnalyzer()
-    deadend = True
-    for tweet in api.search_tweets(q="" + sentence + "-filter:retweets", count=100, lang="en", tweet_mode="extended"):
+    for tweet in api.search_tweets(q = sentence + "-filter:retweets", count=100, lang="en", tweet_mode="extended"):
         if (now - tweet.created_at).days < 7:
             print(f"\n{tweet.user.name}:{tweet.full_text}")
             vaderScore = analysis.polarity_scores(tweet.full_text)
-            textblob = TextBlob(tweet.full_text)
-            print("Blob Score:")
-            print(textblob.sentiment.polarity, textblob.sentiment.subjectivity)
-            print(f"\nVader Score:")
-            print(vaderScore)
+            print(f"\nVader Score:", vaderScore)
             print("----------------------------------------------------------------------------------------------")
-            csvWriter.writerow([tweet.id, tweet.user.name, tweet.full_text.encode('utf-8'), vaderScore])
-            time.sleep(0.1)
-        else:
-            deadend = False
-            plt.title(f"{sentence} Polarity Scores")
-            labels = 'Positive', 'Negative', 'Neutral'
-            sizes = [vaderScore['pos'], vaderScore['neg'], vaderScore['neu']]
-            explode = (0, 0.1, 0)
-            sentimentGraph, graph = plt.subplots()
-            graph.pie(sizes, explode=explode, labels=labels, autopct='%1.0f%%', shadow=True, startangle=90)
-            graph.axis('equal')
-            plt.show()
-            return
-
-        if not deadend:
-            time.sleep(1)
+            csvWriter.writerow([tweet.user.name, tweet.full_text.encode('utf-8'), vaderScore])
+            time.sleep(0.01)
+    #plt.title(f"{sentence} Polarity Scores")
+    labels = 'Positive', 'Negative', 'Neutral'
+    sizes = [vaderScore['pos'], vaderScore['neg'], vaderScore['neu']]
+    explode = (0, 0.1, 0)
+    vaderGraph, graph = plt.subplots()
+    graph.pie(sizes, explode=explode, labels=labels, autopct='%1.0f%%', shadow=True, startangle=90)
+    graph.axis('equal')
+    plt.show()
+    return
 
 sentiment_analyser_score(api)
 csvFile.close()
